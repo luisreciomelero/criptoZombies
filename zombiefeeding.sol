@@ -27,6 +27,12 @@ contract ZombieFeeding is ZombieFactory {
   //Hemos borrado la dirección del contrato de forma que esta será dinámica, le pasaremos la dirección con el siguiente método. 
   //esta es una medida de seguridad ya que probablemente el contrato debamos cambiarlo en el futuro y si le damos una dirección fija en el futuro deberíamos informar a los usuarios de que la cambien.
 
+  modifier ownerOf(uint _zombieId) {
+    require(msg.sender == zombieToOwner[_zombieId]);
+    _;
+  }
+  //Con este modificador nos ahorramos tener que comprobar esta condicion en cada método que necesitemos
+
   function setKittyContractAddress(address _address) external onlyOwner {
   // Se trata de la funcion para asignar a la interfaz la dirección del contrato que implementa.
   // se puede llamar desde fuera únicamente, sin embargo, debe ser el propietario. Esto lo comprobamos con el onlyOwner.
@@ -44,8 +50,7 @@ contract ZombieFeeding is ZombieFactory {
   }
 
   
-  function feedAndMultiply(uint _zombieId, uint _targetDna, string _species) public {
-    require(msg.sender == zombieToOwner[_zombieId]);
+  function feedAndMultiply(uint _zombieId, uint _targetDna, string _species) internal ownerOf(_zombieId) {
     Zombie storage myZombie = zombies[_zombieId];
     require(_isReady(myZombie));
     //comprobamos el contador antes de dejar que un zombie se alimente.
@@ -64,7 +69,7 @@ contract ZombieFeeding is ZombieFactory {
   function feedOnKitty(uint _zombieId, uint _kittyId) public { //Este método nos permite acceder al ADN del kitty guardado en el contrato de las kittys.
     uint kittyDna;
     (,,,,,,,,,kittyDna) = kittyContract.getKitty(_kittyId);
-    //Unicamente nos quedamos con el último atributo del método que devuelve la interfaz
+    //Únicamente nos quedamos con el último atributo del método que devuelve la interfaz
     feedAndMultiply(_zombieId, kittyDna, "kitty");
   }
 
